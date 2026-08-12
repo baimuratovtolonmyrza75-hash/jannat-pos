@@ -173,17 +173,14 @@ function ReceiveModal({
   });
 
   useEffect(() => {
-    // Only fetch if mode is existing
-    if (mode === 'existing') {
-      Promise.all([
-        api.get<Product[]>('/products'),
-        api.get<Category[]>('/products/categories'),
-      ]).then(([prodRes, catRes]) => {
-        setProducts(prodRes.data);
-        setCategories(catRes.data);
-      });
-    }
-  }, [mode]);
+    Promise.all([
+      api.get<Product[]>('/products'),
+      api.get<Category[]>('/products/categories'),
+    ]).then(([prodRes, catRes]) => {
+      setProducts(prodRes.data);
+      setCategories(catRes.data);
+    });
+  }, []);
 
   const handleExistingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
