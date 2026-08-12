@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(222 47% 11%);
+  --color-surface: hsl(223 42% 15%);
+  --color-surface-2: hsl(224 38% 19%);
+  --color-border: hsl(225 30% 25%);
+  --color-text-primary: hsl(210 40% 96%);
+  --color-text-secondary: hsl(215 20% 65%);
+  --color-accent: hsl(262 83% 66%);
+  --color-accent-hover: hsl(262 83% 72%);
+}
+
+/* Base */
+body {
+  background-color: hsl(222 47% 11%);
+  color: hsl(210 40% 96%);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(223 42% 15%); }
+::-webkit-scrollbar-thumb { background: hsl(225 30% 25%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(262 83% 66%); }
+
+/* Custom Utilities */
+.bg-surface { background-color: hsl(223 42% 15%); }
+.bg-surface-2 { background-color: hsl(224 38% 19%); }
+.border-subtle { border-color: hsl(225 30% 25%); }
+.text-muted { color: hsl(215 20% 65%); }
+.text-accent { color: hsl(262 83% 66%); }
+.bg-accent { background-color: hsl(262 83% 66%); }
+.hover\:bg-accent-hover:hover { background-color: hsl(262 83% 72%); }
+
+/* Components */
+.card {
+  background-color: hsl(223 42% 15%);
+  border-radius: 0.75rem;
+  border: 1px solid hsl(225 30% 25%);
+  padding: 1.5rem;
+}
+
+.btn-primary {
+  background-color: hsl(262 83% 66%);
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: transform 0.15s, background-color 0.15s, opacity 0.15s;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary:hover { background-color: hsl(262 83% 72%); }
+.btn-primary:active { transform: scale(0.95); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background-color: hsl(224 38% 19%);
+  color: hsl(210 40% 96%);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(225 30% 25%);
+  transition: transform 0.15s, background-color 0.15s, opacity 0.15s;
+  cursor: pointer;
+}
+.btn-secondary:hover { background-color: hsl(223 42% 15%); }
+.btn-secondary:active { transform: scale(0.95); }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-danger {
+  background-color: rgb(220 38 38);
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.15s;
+  cursor: pointer;
+  border: none;
+}
+.btn-danger:hover { background-color: rgb(239 68 68); }
+.btn-danger:active { transform: scale(0.95); }
+
+.input {
+  background-color: hsl(224 38% 19%);
+  border: 1px solid hsl(225 30% 25%);
+  color: hsl(210 40% 96%);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input::placeholder { color: hsl(215 20% 65%); }
+.input:focus {
+  border-color: hsl(262 83% 66%);
+  box-shadow: 0 0 0 1px hsl(262 83% 66%);
+}
+
+select.input option {
+  background-color: hsl(222 47% 11%);
+  color: hsl(210 40% 96%);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.badge-success { background-color: rgb(34 197 94 / 0.2); color: rgb(74 222 128); }
+.badge-warning { background-color: rgb(234 179 8 / 0.2); color: rgb(250 204 21); }
+.badge-danger  { background-color: rgb(239 68 68 / 0.2); color: rgb(248 113 113); }
+.badge-info    { background-color: rgb(59 130 246 / 0.2); color: rgb(96 165 250); }
+.badge-purple  { background-color: rgb(168 85 247 / 0.2); color: rgb(192 132 252); }
+
+/* POS Scanner */
+.pos-scanner-input {
+  background-color: hsl(224 38% 19%);
+  border: 2px solid hsl(262 83% 66%);
+  color: hsl(210 40% 96%);
+  border-radius: 0.75rem;
+  padding: 0.875rem 3rem;
+  width: 100%;
+  outline: none;
+  font-size: 1.5rem;
+  font-family: ui-monospace, monospace;
+  text-align: center;
+  letter-spacing: 0.1em;
+  transition: box-shadow 0.15s;
+}
+.pos-scanner-input:focus {
+  box-shadow: 0 0 0 3px hsl(262 83% 66% / 0.3);
+}
+.pos-scanner-input::placeholder { color: hsl(215 20% 40%); }
+
+/* Animations */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-once {
+  0%   { background-color: hsl(262 83% 66% / 0.3); }
+  100% { background-color: transparent; }
+}
+
+.animate-slide-in { animation: slideIn 0.2s ease-out; will-change: transform, opacity; }
+.animate-scan-flash { animation: pulse-once 0.5s ease-out; }
+
+/* Performance Helpers */
+.deferred-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Print */
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: white !important; color: black !important; }
+  .receipt {
+    width: 80mm;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+  }
+}
+.print-only { display: none; }
