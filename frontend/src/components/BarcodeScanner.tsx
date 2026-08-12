@@ -127,25 +127,40 @@ export function BarcodeScanner({
   useEffect(() => {
     if (usePhotoMode) return;
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setForcePhotoMode(true);
+      return;
+    }
+
     const reader = initReader();
     readerRef.current = reader;
 
-    reader.listVideoInputDevices().then((devices) => {
-      if (devices.length === 0) {
-        setForcePhotoMode(true); // Fallback to photo mode if no cameras
-        return;
-      }
-      setCameras(devices);
-      const backCamera = devices.find(
-        (d) =>
-          d.label.toLowerCase().includes('back') ||
-          d.label.toLowerCase().includes('rear') ||
-          d.label.toLowerCase().includes('environment'),
-      );
-      setSelectedCamera(backCamera?.deviceId || devices[devices.length - 1].deviceId);
-    }).catch(() => {
-      setForcePhotoMode(true); // Fallback to photo mode on error
-    });
+    // 1. Сначала явно запрашиваем доступ, иначе Safari на iPhone выдаст пустой список камер
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then((stream) => {
+        // Как только доступ получен, закрываем этот временный поток
+        stream.getTracks().forEach((track) => track.stop());
+        // 2. Теперь безопасно получаем список камер
+        return reader.listVideoInputDevices();
+      })
+      .then((devices) => {
+        if (devices.length === 0) {
+          setForcePhotoMode(true); // Fallback to photo mode if no cameras
+          return;
+        }
+        setCameras(devices);
+        const backCamera = devices.find(
+          (d) =>
+            d.label.toLowerCase().includes('back') ||
+            d.label.toLowerCase().includes('rear') ||
+            d.label.toLowerCase().includes('environment'),
+        );
+        setSelectedCamera(backCamera?.deviceId || devices[devices.length - 1].deviceId);
+      })
+      .catch((err) => {
+        console.error('Ошибка доступа к камере:', err);
+        setForcePhotoMode(true); // Fallback to photo mode on error
+      });
 
     return () => cleanup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
