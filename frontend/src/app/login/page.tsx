@@ -31,9 +31,9 @@ export default function LoginPage() {
       await login(email.trim().toLowerCase(), password);
       router.replace('/dashboard');
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const axiosErr = err as any;
       setError(
-        axiosErr.response?.data?.message || 'Неверный email или пароль',
+        axiosErr.response?.data?.message || axiosErr.message || 'Сетевая ошибка или неверный пароль'
       );
     } finally {
       setIsLoading(false);
