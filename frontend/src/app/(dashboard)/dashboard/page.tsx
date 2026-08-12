@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { DashboardMetrics } from '@/lib/types';
@@ -75,30 +77,19 @@ function MetricCard({
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data: ownerMetrics, isLoading: isOwnerLoading } = useSWR<DashboardMetrics>(
+    user?.role === 'OWNER' ? '/analytics/dashboard' : null,
+    fetcher
+  );
 
-  useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        if (user?.role === 'OWNER') {
-          const { data } = await api.get<DashboardMetrics>('/analytics/dashboard');
-          setMetrics(data);
-        } else {
-          // Non-owners get a simpler view
-          const { data: lowStock } = await api.get('/inventory/low-stock?threshold=10');
-          setMetrics({ lowStock } as unknown as DashboardMetrics);
-        }
-      } catch {
-        setError('Не удалось загрузить данные');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data: lowStock, isLoading: isStockLoading } = useSWR<any>(
+    user?.role && user.role !== 'OWNER' ? '/inventory/low-stock?threshold=10' : null,
+    fetcher
+  );
 
-    loadMetrics();
-  }, [user]);
+  const isLoading = (user?.role === 'OWNER' ? isOwnerLoading : isStockLoading) || !user;
+  const metrics = user?.role === 'OWNER' ? ownerMetrics : (lowStock ? { lowStock } as unknown as DashboardMetrics : null);
+  const error = '';
 
   if (isLoading) {
     return (

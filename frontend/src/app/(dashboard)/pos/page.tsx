@@ -1,9 +1,11 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
-import { Product, CartItem, PaymentMethod } from '@/lib/types';
+import { Product, CartItem, PaymentMethod, Customer } from '@/lib/types';
 import { useCameraScanner } from '@/hooks/useCameraScanner';
 import {
   Scan,
@@ -22,7 +24,6 @@ import {
   ClipboardSignature,
 } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
-import { Customer } from '@/lib/types';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: 'CASH', label: 'Наличные', icon: Banknote },
@@ -88,7 +89,9 @@ export default function PosPage() {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { data: customersData, mutate: mutateCustomers } = useSWR<Customer[]>('/customers', fetcher);
+  const customers = customersData || [];
+  
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>('');
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
@@ -99,7 +102,6 @@ export default function PosPage() {
 
   useEffect(() => {
     inputRef.current?.focus();
-    api.get<Customer[]>('/customers').then((res) => setCustomers(res.data));
   }, []);
 
   useEffect(() => {
@@ -246,7 +248,7 @@ export default function PosPage() {
             phone: newCustomerPhone,
           });
           customerId = res.data.id;
-          setCustomers(prev => [...prev, res.data]);
+          mutateCustomers();
         } catch {
           setScanError('Ошибка при создании клиента');
           setIsProcessing(false);

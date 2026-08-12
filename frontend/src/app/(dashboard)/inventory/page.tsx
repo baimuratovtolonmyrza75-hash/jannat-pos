@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import useSWR from 'swr';
 import { api } from '@/lib/api';
+import { fetcher } from '@/lib/fetcher';
 import { StockEntry, Product, Category } from '@/lib/types';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useCameraScanner } from '@/hooks/useCameraScanner';
@@ -171,14 +173,17 @@ function ReceiveModal({
   });
 
   useEffect(() => {
-    Promise.all([
-      api.get<Product[]>('/products'),
-      api.get<Category[]>('/products/categories'),
-    ]).then(([prodRes, catRes]) => {
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
-    });
-  }, []);
+    // Only fetch if mode is existing
+    if (mode === 'existing') {
+      Promise.all([
+        api.get<Product[]>('/products'),
+        api.get<Category[]>('/products/categories'),
+      ]).then(([prodRes, catRes]) => {
+        setProducts(prodRes.data);
+        setCategories(catRes.data);
+      });
+    }
+  }, [mode]);
 
   const handleExistingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -390,9 +395,6 @@ function ReceiveModal({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function InventoryPage() {
-  const [entries, setEntries] = useState<StockEntry[]>([]);
-  const [lowStock, setLowStock] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -401,21 +403,24 @@ export default function InventoryPage() {
   const [receiveInitialProduct, setReceiveInitialProduct] = useState<Product | null | undefined>(undefined);
   const [receiveInitialBarcode, setReceiveInitialBarcode] = useState<string | undefined>(undefined);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [entriesRes, lowRes] = await Promise.all([
-        api.get<StockEntry[]>('/inventory/entries'),
-        api.get<Product[]>('/inventory/low-stock?threshold=5'),
-      ]);
-      setEntries(entriesRes.data);
-      setLowStock(lowRes.data);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: entriesData, isLoading: isEntriesLoading, mutate: mutateEntries } = useSWR<StockEntry[]>(
+    '/inventory/entries',
+    fetcher
+  );
 
-  useEffect(() => { loadData(); }, []);
+  const { data: lowStockData, isLoading: isLowStockLoading, mutate: mutateLowStock } = useSWR<Product[]>(
+    '/inventory/low-stock?threshold=5',
+    fetcher
+  );
+
+  const entries = entriesData || [];
+  const lowStock = lowStockData || [];
+  const isLoading = isEntriesLoading || isLowStockLoading;
+
+  const loadData = () => {
+    mutateEntries();
+    mutateLowStock();
+  };
 
   // Handle camera scan result for inventory
   const handleCameraScan = async ({ text }: { text: string }) => {

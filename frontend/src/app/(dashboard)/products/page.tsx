@@ -2,8 +2,10 @@
 
 import dynamic from 'next/dynamic';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import useSWR from 'swr';
 import { api } from '@/lib/api';
+import { fetcher } from '@/lib/fetcher';
 import { Product, Category } from '@/lib/types';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useCameraScanner } from '@/hooks/useCameraScanner';
@@ -58,11 +60,8 @@ const ProductDetailModal = dynamic(() => import('./components/ProductDetailModal
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [editProduct, setEditProduct] = useState<Partial<Product> | null | false>(false);
   const [printProduct, setPrintProduct] = useState<Product | null>(null);
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
@@ -73,24 +72,20 @@ export default function ProductsPage() {
 
   const handlePrint = useReactToPrint({ contentRef: printRef });
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [prodRes, catRes] = await Promise.all([
-        api.get<Product[]>(`/products?search=${debouncedSearch}&categoryId=${selectedCategory}`),
-        api.get<Category[]>('/products/categories'),
-      ]);
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: productsData, isLoading: isProductsLoading, mutate: mutateProducts } = useSWR<Product[]>(
+    `/products?search=${debouncedSearch}&categoryId=${selectedCategory}`,
+    fetcher,
+    { keepPreviousData: true }
+  );
 
-  useEffect(() => {
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, selectedCategory]);
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR<Category[]>(
+    '/products/categories',
+    fetcher
+  );
+
+  const products = productsData || [];
+  const categories = categoriesData || [];
+  const isLoading = isProductsLoading || isCategoriesLoading;
 
   // Handle camera scan — find product and show detail card
   const handleCameraScan = async ({ text }: { text: string }) => {
@@ -117,13 +112,13 @@ export default function ProductsPage() {
     } else {
       await api.post('/products', data);
     }
-    loadData();
+    mutateProducts();
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Удалить товар?')) return;
     await api.delete(`/products/${id}`);
-    loadData();
+    mutateProducts();
   };
 
   const margin = (p: Product) =>
