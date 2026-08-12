@@ -95,14 +95,11 @@ export function BarcodeScanner({
         img.onerror = () => rej(new Error('Не удалось загрузить фото'));
       });
 
-      // Draw image to canvas and decode
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
-
-      const result = await reader.decodeFromCanvas(canvas);
+      // Decode directly from the image element (ZXing handles canvas internally)
+      const readerAny = reader as any;
+      const result = await (readerAny.decodeFromImageElement
+        ? readerAny.decodeFromImageElement(img)
+        : readerAny.decodeFromImageUrl(url));
       const text = result.getText();
       const format = result.getBarcodeFormat().toString();
 
