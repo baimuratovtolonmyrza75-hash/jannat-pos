@@ -123,29 +123,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-6 pt-4 border-t border-subtle">
-            <p className="text-xs text-muted text-center mb-2">Тестовые данные:</p>
-            <div className="grid grid-cols-3 gap-1 text-xs">
-              {[
-                { label: 'Владелец', email: 'owner@jannat.com' },
-                { label: 'Админ', email: 'admin@jannat.com' },
-                { label: 'Кассир', email: 'cashier@jannat.com' },
-              ].map((cred) => (
-                <button
-                  key={cred.email}
-                  type="button"
-                  onClick={() => {
-                    setEmail(cred.email);
-                    setPassword('password123');
-                  }}
-                  className="bg-surface-2 hover:bg-border rounded px-2 py-1.5 text-muted hover:text-text-primary transition-colors text-center"
-                >
-                  {cred.label}
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
