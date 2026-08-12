@@ -17,6 +17,9 @@ import { CustomersModule } from './customers/customers.module';
 import { DebtsModule } from './debts/debts.module';
 import { ExpensesModule } from './expenses/expenses.module';
 
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,7 +38,9 @@ import { ExpensesModule } from './expenses/expenses.module';
     DebtsModule,
     ExpensesModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
     // Global Exception Filter
     {
       provide: APP_FILTER,
