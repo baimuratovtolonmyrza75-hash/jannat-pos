@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  QR
+  DEBT
+}
+
+enum AuditStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ExpenseCategory {
+  RENT
+  SALARY
+  LOGISTICS
+  MARKETING
+  UTILITIES
+  TAXES
+  OTHER
+}
+
+enum MovementType {
+  RECEIVE // Приемка
+  SALE // Продажа
+  AUDIT_ADJUSTMENT // Корректировка ревизией
+  RETURN // Возврат
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CASHIER)
+  createdAt    DateTime @default(now())
+
+  stockEntries   StockEntry[]
+  sales          Sale[]
+  audits         Audit[]
+  expenses       Expense[]
+  stockMovements StockMovement[]
+  debtPayments   DebtPayment[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  categoryId   Int
+  category     Category @relation(fields: [categoryId], references: [id])
+  SKU          String   @unique
+  costPrice    Float
+  sellingPrice Float
+  stock        Int      @default(0)
+  barcode      String   @unique
+  size         String?
+  color        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stockEntries   StockEntry[]
+  saleItems      SaleItem[]
+  auditItems     AuditItem[]
+  stockMovements StockMovement[]
+}
+
+model StockMovement {
+  id          Int          @id @default(autoincrement())
+  productId   Int
+  product     Product      @relation(fields: [productId], references: [id])
+  type        MovementType
+  quantity    Int // + for incoming, - for outgoing
+  referenceId Int? // ID of SaleItem, StockEntry, or AuditItem
+  createdById Int
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+}
+
+model StockEntry {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id])
+  quantity     Int
+  costPrice    Float
+  sellingPrice Float
+  createdById  Int
+  createdBy    User     @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Sale {
+  id            Int           @id @default(autoincrement())
+  cashierId     Int
+  cashier       User          @relation(fields: [cashierId], references: [id])
+  customerId    Int?
+  customer      Customer?     @relation(fields: [customerId], references: [id])
+  paymentMethod PaymentMethod
+  totalAmount   Float
+  totalProfit   Float
+  createdAt     DateTime      @default(now())
+
+  saleItems SaleItem[]
+  debt      Debt?
+}
+
+model SaleItem {
+  id              Int     @id @default(autoincrement())
+  saleId          Int
+  sale            Sale    @relation(fields: [saleId], references: [id])
+  productId       Int
+  product         Product @relation(fields: [productId], references: [id])
+  quantity        Int
+  priceAtSale     Float
+  costPriceAtSale Float
+}
+
+model Audit {
+  id          Int         @id @default(autoincrement())
+  status      AuditStatus @default(IN_PROGRESS)
+  createdById Int
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  completedAt DateTime?
+
+  auditItems AuditItem[]
+}
+
+model AuditItem {
+  id          Int     @id @default(autoincrement())
+  auditId     Int
+  audit       Audit   @relation(fields: [auditId], references: [id])
+  productId   Int
+  product     Product @relation(fields: [productId], references: [id])
+  expectedQty Int
+  actualQty   Int
+  difference  Int
+}
+
+model Expense {
+  id          Int             @id @default(autoincrement())
+  title       String
+  amount      Float
+  category    ExpenseCategory @default(OTHER)
+  createdById Int
+  createdBy   User            @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+
+  sales Sale[]
+  debts Debt[]
+}
+
+model Debt {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  saleId      Int?     @unique
+  sale        Sale?    @relation(fields: [saleId], references: [id])
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  isPaidOff   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments DebtPayment[]
+}
+
+model DebtPayment {
+  id            Int           @id @default(autoincrement())
+  debtId        Int
+  debt          Debt          @relation(fields: [debtId], references: [id])
+  amount        Float
+  paymentMethod PaymentMethod
+  createdById   Int
+  createdBy     User          @relation(fields: [createdById], references: [id])
+  createdAt     DateTime      @default(now())
+}
